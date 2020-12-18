@@ -22,7 +22,9 @@ function toolUsage.start()
 			end	
 		elseif (common.toolReadied == "_gard_trowel") then		
 			if (gvar == 0) then
-				toolUsage.planterSetup()
+				toolUsage.diggingInPlanter()
+			elseif (gvar == 1) then	
+				toolUsage.removehole()	
 			elseif (gvar == 3) then
 				toolUsage.fillingIn()
 			end				
@@ -40,23 +42,38 @@ function toolUsage.fillingIn()
 
 end
 
+function toolUsage.diggingInPlanter()
+	local hitResult = tes3.rayTest{
+		position = tes3.getPlayerEyePosition(), 
+		direction = tes3.getPlayerEyeVector(),
+		maxDistance = 256,
+		}
+	local hitReference = hitResult and hitResult.reference
+		
+	if string.match(string.lower(hitReference.object.id), "planter")  then 
+		local dugInPlanter = tes3.createReference{
+			position = hitResult.intersection,
+			object = "_gard_dugout",
+			scale = 0.8,
+			cell = tes3.player.mobile.cell,
+			}
+		tes3.setGlobal("_gard_globalvar", 1 )	
+	end	
+end
+
 function toolUsage.digginghole()
-	local dugoutPosition = tes3.getPlayerEyePosition()
-	local playerLook = tes3.getPlayerEyeVector()	
 	local result = tes3.rayTest{
-		position = dugoutPosition, 
-		direction = playerLook, 
+		position = tes3.getPlayerEyePosition(), 
+		direction = tes3.getPlayerEyeVector(),
 		root = tes3.game.worldLandscapeRoot, 
 		maxDistance = 256
 		}
 	if result then 
-		dugoutPosition = result.intersection	
-		dugoutPosition.z = dugoutPosition.z + 10		--raising dugout slightly
 		local playerRef = tes3.getPlayerRef()
-		local distanceToTarget = playerRef.position:distance(dugoutPosition)		
+		local distanceToTarget = playerRef.position:distance(result.intersection)		
 		if distanceToTarget <= 128 then  				
 		local newDugoutRef = tes3.createReference{
-			position = dugoutPosition, 
+			position = result.intersection, 
 			object = "_gard_dugout"
 			}
 		end
@@ -74,9 +91,11 @@ end
 
 function toolUsage.plantremover()	
 -- using _gard_hoe to remove organic containers (most plants) and some static plants
-	local pos = tes3.getPlayerEyePosition()
-	local playerLook = tes3.getPlayerEyeVector()
-	local result = tes3.rayTest{position = pos, direction = playerLook, maxDistance = 256}
+	local result = tes3.rayTest{
+		position = tes3.getPlayerEyePosition(), 
+		direction = tes3.getPlayerEyeVector(), 
+		maxDistance = 256
+		}
 	local plantToRemove = result.reference
 	if (plantToRemove.object.objectType == tes3.objectType.container) then
 		if (plantToRemove.object.organic) then
@@ -92,59 +111,48 @@ function toolUsage.plantremover()
 end
 
 local planterList = {
-	["_g_dummyPlanter1"] = "Furn_Com_Planter",
-	["_g_dummyPlanter2"] = "furn_planter_01",
-	["_g_dummyPlanter3"] = "furn_planter_02",
-	["_g_dummyPlanter4"] = "furn_planter_03",
-	["_g_dummyPlanter5"] = "furn_planter_04",
-	["_g_dummyPlanter6"] = "Furn_Planter_MH_01",
-	["_g_dummyPlanter7"] = "Furn_Planter_MH_02",
-	["_g_dummyPlanter8"] = "Furn_Planter_MH_03",
-	["_g_dummyPlanter9"] = "Furn_Planter_MH_04",
-	["_g_dummyPlanter10"] = "Furn_Planter_MH_05",		
-	["_g_dummyPlanter11"] = "Ex_MH_bazaar_planter_02",
+	["_g_dummyPlanter1"] = "Furn_Com_Planter",		
+	["_g_dummyPlanter2"] = "furn_planter_01",		
+	["_g_dummyPlanter3"] = "furn_planter_02",		
+	["_g_dummyPlanter4"] = "furn_planter_03",		
+	["_g_dummyPlanter5"] = "furn_planter_04",		
+	["_g_dummyPlanter6"] = "Furn_Planter_MH_01",	
+	["_g_dummyPlanter7"] = "Furn_Planter_MH_02",	
+	["_g_dummyPlanter8"] = "Furn_Planter_MH_03",	
+	["_g_dummyPlanter9"] = "Furn_Planter_MH_04",	
+	["_g_dummyPlanter10"] = "Furn_Planter_MH_05",	
+	["_g_dummyPlanter11"] = "Ex_MH_bazaar_planter_02",	
+	["_g_dummyPlanter12"] = "Ex_MH_bazaar_planter_01",	
+	
 }
 
 function toolUsage.planterSetup()
-	tes3.messageBox{
-		message = "Set this planter here and fill it with soil?",
-		buttons = {"Yes", "No"},
-		callback = function(e)
-			if e.button == 0 then	--yes
-				local soilCount = mwscript.getItemCount({ reference = tes3.player, item = "_g_pottingsoil"})
-				if soilCount < 1 then
-					tes3.messageBox("You need a sack of soil to fill this planter.")
-				else
-					local playerCell = tes3.player.mobile.cell
-					tes3.removeItem({reference = tes3.player, item = "_g_pottingsoil", count = 1})		--remove soil package	
-					
-					local setPlanter = tes3.createReference({
-						object = planterList[common.dummyPlanterRef.object.id],		
-						position = common.dummyPlanterRef.position,
-						orientaton = common.dummyPlanterRef.orientation,
-						cell = playerCell
-						})
-						
-						
-					local maxZbound = common.dummyPlanterRef.object.boundingBox.max.z
-					local dugInPlanterPosition = common.dummyPlanterRef.position
-					dugInPlanterPosition.z = dugInPlanterPosition.z + maxZbound
-					local dugInPlanter = tes3.createReference{
-						position = dugInPlanterPosition,
-						object = "_gard_dugout",
-						scale = 0.8,
-						cell = playerCell
-						}
-						
-					safeDelete(common.dummyPlanterRef)	
-					tes3.messageBox("planter is ready")
-					tes3.setGlobal("_gard_globalvar", 1 )		
-				
-				end	
-				elseif e.button == 1 then	--no				
-			end
-		end,
-	}
-end
+	local result = tes3.rayTest{
+		position = tes3.getPlayerEyePosition(), 
+		direction = tes3.getPlayerEyeVector(), 
+		maxDistance = 256
+		}
+	local miscPlanter = result.reference
 
+	if  string.match(miscPlanter.object.id, "_g_dummyPlanter") then 
+		tes3.messageBox{
+			message = "Set this planter here and fill it with soil?",
+			buttons = {"Yes", "No"},
+			callback = function(e)
+				if e.button == 0 then	--yes
+					local setPlanter = tes3.createReference({
+						object = planterList[miscPlanter.object.id],	
+						cell = tes3.player.mobile.cell,
+						position = miscPlanter.position,
+						orientation = miscPlanter.orientation
+						})
+					safeDelete(miscPlanter)	
+					tes3.messageBox("planter is ready")
+				elseif e.button == 1 then	--no				
+				end
+			end,
+		}
+	end	
+	
+end
 return toolUsage

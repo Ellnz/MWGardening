@@ -10,18 +10,17 @@ end)
 
 local config = require("GardeningMW.config")
 
-local function droppedPlanter(e)
-	if e.reference.object.objectType ~= tes3.objectType.miscItem then return end	
-	if string.match(e.reference.object.id, "_g_dummyPlanter") then	
-		common.dummyPlanterRef = e.reference
-		mwse.log("dummy ref is %s", common.dummyPlanterRef)
-	end	
-end
 
 local function plantAppears(e) -- enables new plants to simulate growth while player was away
 	if (e.cell.isInterior == true and e.cell.behavesAsExterior == false) then return end		
 	local currentCell = e.cell	
 	calledFrom_plantAppears(currentCell)	
+end
+
+local function droppedSoil(e)
+	if (tes3.getGlobal("_gard_globalvar") ~= 0 ) then return end
+	if e.reference.object.id ~= "_g_pottingsoil" then return end	
+	toolUsage.planterSetup()	
 end
 
 local function droppedIngredient(e)	--itemDropped event, e is dropped item
@@ -44,7 +43,7 @@ local function toolReadied(e)
 	
 	if common.toolReadied ~= "_gard_trowel" then
 		if e.reference.mobile.cell.isInterior == true then
-			tes3.messageBox("You can't plant anything in here.")
+			tes3.messageBox("You can't plant anything here.")
 			return	
 		end	
 		if (config.IllegalToggle == true) then	
@@ -58,13 +57,13 @@ end
 local function usingTools(e)
 	if (e.reference ~= tes3.player) then return end
 	if (e.reference.mobile.readiedWeapon.object.id ~= common.toolReadied) then return end
-	if common.toolReadied ~= "_gard_trowel" then	
+	if common.toolReadied ~= "_gard_trowel" then			
 		if (config.IllegalToggle == true) then	
-			tes3.triggerCrime({
-				type = tes3.crimeType.trespass,
-				value = 5,
-			})	
-		end
+				tes3.triggerCrime({
+					type = tes3.crimeType.trespass,
+					value = 5,
+				})	
+		end	
 	end	
 	toolUsage.start()	
 end
@@ -89,12 +88,11 @@ end
 local function initialized()
 	common = require("GardeningMW.common")
 	toolUsage = require("GardeningMW.toolUsage")
---	planterUsage = require("GardeningMW.planterUsage")
 	
 	ID_Table = require("GardeningMW.ID_Table")
 	planting = require("GardeningMW.planting")
-	event.register("itemDropped",droppedPlanter)
 	event.register("cellChanged", plantAppears)
+	event.register("itemDropped", droppedSoil)	
 	event.register("itemDropped", droppedIngredient)
 	event.register("weaponReadied", toolReadied)
 	event.register("attack", usingTools)

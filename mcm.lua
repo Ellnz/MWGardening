@@ -12,6 +12,7 @@ local function createGeneralCategory(page)
             table = config
         }
     }
+--[[	
     category:createDropdown{
         label = "Growing time of plants.",
 		description = "The number of days it takes for plants to appear.",
@@ -27,7 +28,7 @@ local function createGeneralCategory(page)
             table = config
         }
     }
-	
+--]]	
 	
 	
 	local Instructions = page:createCategory{
@@ -39,12 +40,13 @@ local function createGeneralCategory(page)
 	}
     Instructions:createCategory{
         label = "Use of the hoe:",
-		description = "The hoe can be used to remove organic plants,  and some small static plants as well. It doesn't affect grasses added by groundcover mods, nor does it remove large plants like trees. Look at the plant you want to remove and strike twice with the hoe.",
+		description = "The hoe can be used to remove organic plants, and some small static plants as well. It doesn't affect grasses added by groundcover mods, nor does it remove large plants like trees. Look at the plant you want to remove and strike twice with the hoe.",
 	}
     Instructions:createCategory{
-        label = "Use of the trowel:",
-		description = "The trowel is needed for using pots and planters. You need a pot or planter, and some potting soil. These are available from general merchants and a few special NPCs. To plant something, just position the pot/planter then strike twice at it with the trowel to fill it with soil. Then you can drop an ingredient and cover it up by striking twice again with the trowel.",
+        label = "Use of planters and potting soil:",
+		description = "Planters are containers that you can plant into. They range in size from large pots to wide garden beds. Drop and set the planter into position, then drop a potting soil package while looking at the planter. This will fill it with soil, and then you can use the trowel to plant into it.",
 	}
+	
     return Settings
 end
 
